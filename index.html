@@ -2,10 +2,7 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1, viewport-fit=cover"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Geräte-Board</title>
     <style>
       :root {
@@ -16,13 +13,10 @@
         --line: #e3e6ec;
         --accent: #2f6fed;
         --me: #e8f0ff;
-        box-sizing: border-box;
-        padding-top: env(safe-area-inset-top, 0px);
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-        color-scheme: light;
+        color-scheme: light dark;
       }
       @media (prefers-color-scheme: dark) {
-        :root:not([data-theme="light"]) {
+        :root {
           --bg: #14161b;
           --card: #1d2027;
           --text: #eceef3;
@@ -30,24 +24,10 @@
           --line: #2b2f39;
           --accent: #6b9bff;
           --me: #22314f;
-          color-scheme: dark;
         }
-      }
-      :root[data-theme="dark"] {
-        --bg: #14161b;
-        --card: #1d2027;
-        --text: #eceef3;
-        --muted: #98a0b0;
-        --line: #2b2f39;
-        --accent: #6b9bff;
-        --me: #22314f;
-        color-scheme: dark;
       }
       * {
         box-sizing: border-box;
-      }
-      html {
-        scroll-padding-top: env(safe-area-inset-top, 0px);
       }
       body {
         margin: 0;
@@ -148,20 +128,6 @@
         padding: 16px;
         text-align: center;
       }
-      button {
-        font: inherit;
-        border: 1px solid var(--line);
-        background: var(--card);
-        color: var(--text);
-        border-radius: 10px;
-        padding: 8px 14px;
-        cursor: pointer;
-        margin-top: 16px;
-      }
-      button.danger {
-        border-color: #d0443e;
-        color: #d0443e;
-      }
     </style>
   </head>
   <body>
@@ -182,168 +148,137 @@
       <ul id="list">
         <li class="msg">Verbinde …</li>
       </ul>
-      <div id="admin"></div>
     </main>
     <script>
-      (function () {
-        var listEl = document.getElementById("list"),
-          countEl = document.getElementById("count"),
-          meEl = document.getElementById("me"),
-          myIdEl = document.getElementById("myid"),
-          adminEl = document.getElementById("admin");
-        var mem = {};
-        function store(k, v) {
-          try {
-            if (v === undefined) return localStorage.getItem(k);
-            localStorage.setItem(k, v);
-          } catch (e) {
-            if (v === undefined) return mem[k] || null;
-            mem[k] = v;
-          }
-        }
-        function rnd(n, al) {
-          var s = "";
-          for (var i = 0; i < n; i++)
-            s += al[Math.floor(Math.random() * al.length)];
-          return s;
-        }
-        var token = store("device-token");
-        if (!token) {
-          token = rnd(24, "abcdefghijklmnopqrstuvwxyz0123456789");
-          store("device-token", token);
-        }
-        function label() {
-          var u = navigator.userAgent,
-            os = "Gerät",
-            br = "";
-          if (/iPhone/.test(u)) os = "iPhone";
-          else if (/iPad/.test(u)) os = "iPad";
-          else if (/Android/.test(u)) os = "Android";
-          else if (/Windows/.test(u)) os = "Windows";
-          else if (/Mac OS X/.test(u)) os = "Mac";
-          else if (/Linux/.test(u)) os = "Linux";
-          if (/Edg\//.test(u)) br = "Edge";
-          else if (/Firefox\//.test(u)) br = "Firefox";
-          else if (/Chrome\//.test(u)) br = "Chrome";
-          else if (/Safari\//.test(u)) br = "Safari";
-          return br ? os + " · " + br : os;
-        }
-        function msg(t) {
-          listEl.innerHTML = "";
-          var li = document.createElement("li");
-          li.className = "msg";
-          li.textContent = t;
-          listEl.appendChild(li);
-        }
-        var timer = setTimeout(function () {
-          msg(
-            "Keine Verbindung zur Datenbank. Bitte die Seite innerhalb von claude.ai öffnen und anmelden.",
-          );
-        }, 10000);
+      // === HIER EINTRAGEN (Supabase → Project Settings → API) ===
+      var SUPABASE_URL = "https://abedlprtacoplkuuzcxm.supabase.co/rest/v1/";
+      var SUPABASE_KEY = "sb_publishable_57vn_u0QVk-_hLZwmwKYlw_lNiznF7A";
+      // ==========================================================
 
-        var registering = false;
-        async function init() {
-          var db = await claude.use("db");
-          if (!db) {
-            clearTimeout(timer);
-            msg(
-              "Datenbank nicht verfügbar. Bitte anmelden und die Seite neu laden.",
-            );
-            return;
-          }
-          var user = await claude.use("user");
-          var col = db.collection("devices");
-          col.orderBy("createdAt", "asc").onSnapshot(
-            function (snap) {
-              clearTimeout(timer);
-              var docs = snap.docs,
-                mine = null;
-              listEl.innerHTML = "";
-              docs.forEach(function (d, i) {
-                var v = d.data() || {},
-                  isMe = d.id === token;
-                if (isMe) mine = { nr: i + 1, code: v.code };
-                var li = document.createElement("li");
-                if (isMe) li.className = "mine";
-                var nr = document.createElement("span");
-                nr.className = "nr";
-                nr.textContent = "#" + (i + 1);
-                var code = document.createElement("span");
-                code.className = "code";
-                code.textContent = v.code || d.id.slice(0, 6).toUpperCase();
-                li.appendChild(nr);
-                li.appendChild(code);
-                if (isMe) {
-                  var t = document.createElement("span");
-                  t.className = "tag";
-                  t.textContent = "Du";
-                  li.appendChild(t);
-                }
-                var dev = document.createElement("span");
-                dev.className = "dev";
-                dev.textContent = v.device || "";
-                li.appendChild(dev);
-                listEl.appendChild(li);
-              });
-              if (!docs.length) msg("Noch keine Geräte registriert.");
-              countEl.textContent =
-                docs.length + (docs.length === 1 ? " Gerät" : " Geräte");
-              if (mine) {
-                meEl.hidden = false;
-                myIdEl.textContent = "#" + mine.nr + " · " + mine.code;
-              } else if (!registering && !snap.metadata.fromCache) {
-                registering = true;
-                col
-                  .doc(token)
-                  .set({
-                    code: "GER-" + rnd(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"),
-                    createdAt: Date.now(),
-                    device: label(),
-                  })
-                  .catch(function () {
-                    registering = false;
-                    meEl.hidden = false;
-                    myIdEl.textContent = "Nur Ansicht (keine Schreibrechte)";
-                  });
-              }
-            },
-            function () {
-              clearTimeout(timer);
-              msg("Die Liste konnte nicht geladen werden.");
-            },
-          );
-
-          var canEdit = user ? await user.canEdit() : false;
-          if (canEdit) {
-            var b = document.createElement("button");
-            b.textContent = "Liste zurücksetzen";
-            var armed = false;
-            b.onclick = async function () {
-              if (!armed) {
-                armed = true;
-                b.textContent = "Wirklich alle Geräte löschen?";
-                b.className = "danger";
-                return;
-              }
-              try {
-                var s = await col.get();
-                await Promise.all(
-                  s.docs.map(function (d) {
-                    return col.doc(d.id).delete();
-                  }),
-                );
-              } catch (e) {}
-              armed = false;
-              b.textContent = "Liste zurücksetzen";
-              b.className = "";
-            };
-            adminEl.appendChild(b);
-          }
+      var API = SUPABASE_URL + "/rest/v1/devices";
+      var HEAD = { apikey: SUPABASE_KEY, "Content-Type": "application/json" };
+      var listEl = document.getElementById("list"),
+        countEl = document.getElementById("count"),
+        meEl = document.getElementById("me"),
+        myIdEl = document.getElementById("myid");
+      var mem = {};
+      function store(k, v) {
+        try {
+          if (v === undefined) return localStorage.getItem(k);
+          localStorage.setItem(k, v);
+        } catch (e) {
+          if (v === undefined) return mem[k] || null;
+          mem[k] = v;
         }
-        init().catch(function () {
-          clearTimeout(timer);
-          msg("Verbindungsfehler.");
+      }
+      function rnd(n, al) {
+        var s = "";
+        for (var i = 0; i < n; i++)
+          s += al[Math.floor(Math.random() * al.length)];
+        return s;
+      }
+      var token = store("device-token");
+      if (!token) {
+        token = rnd(24, "abcdefghijklmnopqrstuvwxyz0123456789");
+        store("device-token", token);
+      }
+      function label() {
+        var u = navigator.userAgent,
+          os = "Gerät",
+          br = "";
+        if (/iPhone/.test(u)) os = "iPhone";
+        else if (/iPad/.test(u)) os = "iPad";
+        else if (/Android/.test(u)) os = "Android";
+        else if (/Windows/.test(u)) os = "Windows";
+        else if (/Mac OS X/.test(u)) os = "Mac";
+        else if (/Linux/.test(u)) os = "Linux";
+        if (/Edg\//.test(u)) br = "Edge";
+        else if (/Firefox\//.test(u)) br = "Firefox";
+        else if (/Chrome\//.test(u)) br = "Chrome";
+        else if (/Safari\//.test(u)) br = "Safari";
+        return br ? os + " · " + br : os;
+      }
+      function msg(t) {
+        listEl.innerHTML = "";
+        var li = document.createElement("li");
+        li.className = "msg";
+        li.textContent = t;
+        listEl.appendChild(li);
+      }
+
+      async function register() {
+        // Bereits vorhandene IDs werden ignoriert (ON CONFLICT DO NOTHING)
+        var r = await fetch(API + "?on_conflict=id", {
+          method: "POST",
+          headers: Object.assign(
+            { Prefer: "resolution=ignore-duplicates,return=minimal" },
+            HEAD,
+          ),
+          body: JSON.stringify({
+            id: token,
+            code: "GER-" + rnd(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"),
+            device: label(),
+          }),
         });
+        if (!r.ok) throw new Error("write");
+      }
+      async function refresh() {
+        var r = await fetch(
+          API + "?select=id,code,device,created_at&order=created_at.asc",
+          { headers: HEAD },
+        );
+        if (!r.ok) throw new Error("read");
+        var rows = await r.json();
+        listEl.innerHTML = "";
+        var mine = null;
+        rows.forEach(function (v, i) {
+          var isMe = v.id === token;
+          if (isMe) mine = { nr: i + 1, code: v.code };
+          var li = document.createElement("li");
+          if (isMe) li.className = "mine";
+          var nr = document.createElement("span");
+          nr.className = "nr";
+          nr.textContent = "#" + (i + 1);
+          var code = document.createElement("span");
+          code.className = "code";
+          code.textContent = v.code;
+          li.appendChild(nr);
+          li.appendChild(code);
+          if (isMe) {
+            var t = document.createElement("span");
+            t.className = "tag";
+            t.textContent = "Du";
+            li.appendChild(t);
+          }
+          var dev = document.createElement("span");
+          dev.className = "dev";
+          dev.textContent = v.device || "";
+          li.appendChild(dev);
+          listEl.appendChild(li);
+        });
+        if (!rows.length) msg("Noch keine Geräte registriert.");
+        countEl.textContent =
+          rows.length + (rows.length === 1 ? " Gerät" : " Geräte");
+        if (mine) {
+          meEl.hidden = false;
+          myIdEl.textContent = "#" + mine.nr + " · " + mine.code;
+        }
+      }
+      (async function () {
+        if (SUPABASE_URL.indexOf("DEIN-PROJEKT") > -1) {
+          msg("Bitte zuerst SUPABASE_URL und SUPABASE_KEY im Code eintragen.");
+          return;
+        }
+        try {
+          await register();
+          await refresh();
+        } catch (e) {
+          msg("Verbindungsfehler. Prüfe URL, Key und die Tabellen-Regeln.");
+          return;
+        }
+        setInterval(function () {
+          refresh().catch(function () {});
+        }, 3000);
       })();
     </script>
   </body>
