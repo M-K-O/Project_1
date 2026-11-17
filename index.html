@@ -2,29 +2,20 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Geräte-Board</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, user-scalable=no"
+    />
+    <title>Kampf-Test 1 vs 1</title>
     <style>
       :root {
-        --bg: #f6f7f9;
-        --card: #fff;
-        --text: #1b1f27;
-        --muted: #6a7280;
-        --line: #e3e6ec;
-        --accent: #2f6fed;
-        --me: #e8f0ff;
-        color-scheme: light dark;
-      }
-      @media (prefers-color-scheme: dark) {
-        :root {
-          --bg: #14161b;
-          --card: #1d2027;
-          --text: #eceef3;
-          --muted: #98a0b0;
-          --line: #2b2f39;
-          --accent: #6b9bff;
-          --me: #22314f;
-        }
+        --bg: #14161b;
+        --card: #1d2027;
+        --text: #eceef3;
+        --muted: #98a0b0;
+        --line: #2b2f39;
+        --accent: #6b9bff;
+        color-scheme: dark;
       }
       * {
         box-sizing: border-box;
@@ -39,122 +30,152 @@
           "Segoe UI",
           Roboto,
           sans-serif;
+        -webkit-user-select: none;
+        user-select: none;
       }
       main {
-        max-width: 560px;
+        max-width: 680px;
         margin: 0 auto;
-        padding: 24px 16px 40px;
+        padding: 20px 12px 40px;
       }
       h1 {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
         margin: 0 0 4px;
       }
       .sub {
         color: var(--muted);
-        margin: 0 0 20px;
+        margin: 0 0 16px;
       }
-      .me {
+      .card {
         background: var(--card);
         border: 1px solid var(--line);
         border-radius: 14px;
         padding: 16px;
-        margin-bottom: 20px;
+        margin-bottom: 14px;
       }
-      .me small {
-        color: var(--muted);
-        display: block;
-      }
-      .me strong {
-        font-size: 1.6rem;
-        color: var(--accent);
-        letter-spacing: 0.03em;
-      }
-      .head {
+      .row {
         display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-        margin-bottom: 8px;
-      }
-      .count {
-        color: var(--muted);
-        font-size: 0.9rem;
-      }
-      ul {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        overflow: hidden;
-      }
-      li {
-        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
         align-items: center;
-        gap: 12px;
-        padding: 12px 16px;
-        border-bottom: 1px solid var(--line);
       }
-      li:last-child {
-        border-bottom: 0;
+      button,
+      input {
+        font: inherit;
+        border-radius: 10px;
+        border: 1px solid var(--line);
+        background: #252a33;
+        color: var(--text);
+        padding: 10px 14px;
       }
-      li.mine {
-        background: var(--me);
+      button {
+        cursor: pointer;
       }
-      .dot {
-        width: 9px;
-        height: 9px;
-        border-radius: 50%;
-        background: #2fb344;
-        flex: none;
+      button.primary {
+        background: var(--accent);
+        color: #0b1220;
+        border-color: var(--accent);
+        font-weight: 600;
       }
-      .nr {
-        min-width: 2.2em;
-        color: var(--muted);
-        font-variant-numeric: tabular-nums;
+      input {
+        width: 7.5em;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        text-align: center;
       }
       .code {
-        font-weight: 600;
-        letter-spacing: 0.04em;
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: 0.2em;
+        color: var(--accent);
       }
-      .dev {
-        margin-left: auto;
+      .status {
+        color: var(--muted);
+        margin-top: 10px;
+        min-height: 1.5em;
+      }
+      #game {
+        display: none;
+      }
+      canvas {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 12px;
+        border: 1px solid var(--line);
+        background: #0e1015;
+        touch-action: none;
+      }
+      .hud {
+        display: flex;
+        justify-content: space-between;
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin: 8px 2px;
+      }
+      .pad {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 10px;
+      }
+      .pad button {
+        flex: 1;
+        padding: 16px 0;
+        font-size: 1.3rem;
+        touch-action: none;
+      }
+      .help {
         color: var(--muted);
         font-size: 0.85rem;
-        text-align: right;
-      }
-      .tag {
-        font-size: 0.72rem;
-        background: var(--accent);
-        color: #fff;
-        border-radius: 99px;
-        padding: 1px 8px;
-      }
-      .msg {
-        color: var(--muted);
-        padding: 16px;
-        text-align: center;
+        margin-top: 8px;
       }
     </style>
   </head>
   <body>
     <main>
-      <h1>Geräte-Board</h1>
+      <h1>Kampf-Test 1 vs 1</h1>
       <p class="sub">
-        Jedes Gerät erscheint mit seiner ID in der Liste, solange es diese Seite
-        geöffnet hat. Schließt es die Seite, verschwindet es sofort.
+        Echtzeit-Test mit direkter Verbindung (WebRTC). So spürst du, wie sich
+        die Latenz zwischen zwei Geräten anfühlt.
       </p>
-      <section class="me" id="me" hidden>
-        <small>Deine Geräte-ID</small>
-        <strong id="myid">–</strong>
+
+      <section class="card" id="lobby">
+        <div class="row">
+          <button class="primary" id="btnCreate">Raum erstellen</button>
+          <span style="color: var(--muted)">oder</span>
+          <input
+            id="codeIn"
+            maxlength="4"
+            placeholder="CODE"
+            autocomplete="off"
+          />
+          <button id="btnJoin">Beitreten</button>
+        </div>
+        <div id="mycode" style="margin-top: 14px" hidden>
+          <small style="color: var(--muted)"
+            >Dein Raumcode – gib ihn dem Gegner:</small
+          >
+          <div class="code" id="codeShow">----</div>
+        </div>
+        <div class="status" id="status"></div>
       </section>
-      <div class="head">
-        <h2 style="font-size: 1.05rem; margin: 0">Jetzt online</h2>
-        <span class="count" id="count"></span>
-      </div>
-      <ul id="list">
-        <li class="msg">Verbinde …</li>
-      </ul>
+
+      <section id="game">
+        <canvas id="cv" width="640" height="320"></canvas>
+        <div class="hud">
+          <span id="who"></span><span id="ping">Ping: –</span>
+        </div>
+        <div class="pad">
+          <button id="bL">◀</button><button id="bR">▶</button
+          ><button id="bJ">⤒</button><button id="bA">✊</button>
+        </div>
+        <div class="help">
+          Tastatur: A/D oder ←/→ laufen, W/↑/Leertaste springen, J/F/X schlagen.
+          Der Gegner steht in dem Moment, in dem er sich verbindet, auf der
+          anderen Seite.
+        </div>
+      </section>
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
@@ -163,20 +184,16 @@
       var SUPABASE_URL = "https://abedlprtacoplkuuzcxm.supabase.co";
       var SUPABASE_KEY = "sb_publishable_57vn_u0QVk-_hLZwmwKYlw_lNiznF7A";
       // ==========================================================
+      var STUN = [
+        { urls: "stun:stun.l.google.com:19302" },
+        { urls: "stun:stun1.l.google.com:19302" },
+      ];
 
-      var listEl = document.getElementById("list"),
-        countEl = document.getElementById("count"),
-        meEl = document.getElementById("me"),
-        myIdEl = document.getElementById("myid");
-      var mem = {};
-      function store(k, v) {
-        try {
-          if (v === undefined) return localStorage.getItem(k);
-          localStorage.setItem(k, v);
-        } catch (e) {
-          if (v === undefined) return mem[k] || null;
-          mem[k] = v;
-        }
+      var $ = function (id) {
+        return document.getElementById(id);
+      };
+      function setStatus(t) {
+        $("status").textContent = t;
       }
       function rnd(n, al) {
         var s = "";
@@ -184,141 +201,417 @@
           s += al[Math.floor(Math.random() * al.length)];
         return s;
       }
-      function label() {
-        var u = navigator.userAgent,
-          os = "Gerät",
-          br = "";
-        if (/iPhone/.test(u)) os = "iPhone";
-        else if (/iPad/.test(u)) os = "iPad";
-        else if (/Android/.test(u)) os = "Android";
-        else if (/Windows/.test(u)) os = "Windows";
-        else if (/Mac OS X/.test(u)) os = "Mac";
-        else if (/Linux/.test(u)) os = "Linux";
-        if (/Edg\//.test(u)) br = "Edge";
-        else if (/Firefox\//.test(u)) br = "Firefox";
-        else if (/Chrome\//.test(u)) br = "Chrome";
-        else if (/Safari\//.test(u)) br = "Safari";
-        return br ? os + " · " + br : os;
-      }
-      function msg(t) {
-        listEl.innerHTML = "";
-        var li = document.createElement("li");
-        li.className = "msg";
-        li.textContent = t;
-        listEl.appendChild(li);
+
+      /* ---------- Verbindung: Supabase nur zur Vermittlung, Spiel läuft über WebRTC ---------- */
+      var client = null,
+        channel = null,
+        pc = null,
+        dc = null,
+        role = null,
+        pendingIce = [],
+        helloTimer = null,
+        connected = false;
+
+      function sig(m) {
+        channel.send({ type: "broadcast", event: "signal", payload: m });
       }
 
-      // Dauerhafte Geräte-ID (pro Browser) und Code
-      var token = store("device-token");
-      if (!token) {
-        token = rnd(24, "abcdefghijklmnopqrstuvwxyz0123456789");
-        store("device-token", token);
-      }
-      var code = store("device-code");
-      if (!code) {
-        code = "GER-" + rnd(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789");
-        store("device-code", code);
-      }
-
-      function render(state) {
-        // state: { schluessel: [ {code, device, joinedAt}, ... ] }
-        var rows = Object.keys(state)
-          .map(function (key) {
-            var metas = state[key];
-            var first = metas.reduce(function (a, b) {
-              return (a.joinedAt || 0) <= (b.joinedAt || 0) ? a : b;
-            });
-            return {
-              key: key,
-              code: first.code,
-              device: first.device,
-              joinedAt: first.joinedAt || 0,
-            };
-          })
-          .sort(function (a, b) {
-            return a.joinedAt - b.joinedAt || (a.key < b.key ? -1 : 1);
-          });
-
-        listEl.innerHTML = "";
-        var mine = null;
-        rows.forEach(function (v, i) {
-          var isMe = v.key === token;
-          if (isMe) mine = { nr: i + 1, code: v.code };
-          var li = document.createElement("li");
-          if (isMe) li.className = "mine";
-          var dot = document.createElement("span");
-          dot.className = "dot";
-          var nr = document.createElement("span");
-          nr.className = "nr";
-          nr.textContent = "#" + (i + 1);
-          var c = document.createElement("span");
-          c.className = "code";
-          c.textContent = v.code;
-          li.appendChild(dot);
-          li.appendChild(nr);
-          li.appendChild(c);
-          if (isMe) {
-            var t = document.createElement("span");
-            t.className = "tag";
-            t.textContent = "Du";
-            li.appendChild(t);
-          }
-          var dev = document.createElement("span");
-          dev.className = "dev";
-          dev.textContent = v.device || "";
-          li.appendChild(dev);
-          listEl.appendChild(li);
+      function openChannel(code, onReady) {
+        client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        channel = client.channel("kampf-" + code, {
+          config: { broadcast: { self: false } },
         });
-        if (!rows.length) msg("Niemand online.");
-        countEl.textContent = rows.length + " online";
-        if (mine) {
-          meEl.hidden = false;
-          myIdEl.textContent = "#" + mine.nr + " · " + mine.code;
+        channel.on("broadcast", { event: "signal" }, function (e) {
+          handleSignal(e.payload).catch(function () {});
+        });
+        channel.subscribe(function (st) {
+          if (st === "SUBSCRIBED") onReady();
+          else if (st === "CHANNEL_ERROR" || st === "TIMED_OUT")
+            setStatus("Verbindungsfehler zu Supabase. Prüfe URL und Key.");
+        });
+      }
+
+      function createPC() {
+        pc = new RTCPeerConnection({ iceServers: STUN });
+        pc.onicecandidate = function (e) {
+          if (e.candidate) sig({ type: "ice", cand: e.candidate.toJSON() });
+        };
+        pc.onconnectionstatechange = function () {
+          if (
+            connected &&
+            (pc.connectionState === "failed" ||
+              pc.connectionState === "disconnected" ||
+              pc.connectionState === "closed")
+          )
+            onLost();
+          if (!connected && pc.connectionState === "failed")
+            setStatus(
+              "Direktverbindung fehlgeschlagen (Firewall/Mobilfunk). Dafür bräuchte man einen TURN-Server.",
+            );
+        };
+      }
+      function flushIce() {
+        pendingIce.forEach(function (c) {
+          pc.addIceCandidate(c).catch(function () {});
+        });
+        pendingIce = [];
+      }
+      async function handleSignal(m) {
+        if (m.type === "hello" && role === "host" && !pc) {
+          createPC();
+          dc = pc.createDataChannel("game", {
+            ordered: false,
+            maxRetransmits: 0,
+          });
+          setupDC();
+          var o = await pc.createOffer();
+          await pc.setLocalDescription(o);
+          sig({ type: "offer", sdp: { type: o.type, sdp: o.sdp } });
+        } else if (m.type === "offer" && role === "guest" && !pc) {
+          clearInterval(helloTimer);
+          setStatus("Verbinde direkt …");
+          createPC();
+          pc.ondatachannel = function (e) {
+            dc = e.channel;
+            setupDC();
+          };
+          await pc.setRemoteDescription(m.sdp);
+          flushIce();
+          var a = await pc.createAnswer();
+          await pc.setLocalDescription(a);
+          sig({ type: "answer", sdp: { type: a.type, sdp: a.sdp } });
+        } else if (
+          m.type === "answer" &&
+          role === "host" &&
+          pc &&
+          !pc.remoteDescription
+        ) {
+          await pc.setRemoteDescription(m.sdp);
+          flushIce();
+        } else if (m.type === "ice") {
+          if (pc && pc.remoteDescription)
+            pc.addIceCandidate(m.cand).catch(function () {});
+          else pendingIce.push(m.cand);
         }
       }
+      function setupDC() {
+        dc.onopen = function () {
+          connected = true;
+          setStatus("");
+          // Vermittlung wird nicht mehr gebraucht
+          try {
+            client.removeChannel(channel);
+          } catch (e) {}
+          startGame();
+        };
+        dc.onmessage = function (e) {
+          var m;
+          try {
+            m = JSON.parse(e.data);
+          } catch (x) {
+            return;
+          }
+          if (m.t === "s") {
+            opp.tx = m.x;
+            opp.y = m.y;
+            opp.a = m.a;
+            opp.id = m.id;
+            opp.hp = m.hp;
+            opp.got = true;
+          } else if (m.t === "p") send({ t: "r", ts: m.ts });
+          else if (m.t === "r") {
+            rtt = performance.now() - m.ts;
+            $("ping").textContent =
+              "Ping: " +
+              Math.round(rtt) +
+              " ms (einfach ≈ " +
+              Math.round(rtt / 2) +
+              " ms)";
+          }
+        };
+        dc.onclose = onLost;
+      }
+      function send(o) {
+        if (dc && dc.readyState === "open") dc.send(JSON.stringify(o));
+      }
+      function onLost() {
+        if (!running) return;
+        running = false;
+        $("ping").textContent = "Verbindung getrennt";
+        msgText = "Gegner getrennt";
+      }
 
-      (function () {
+      $("btnCreate").onclick = function () {
         if (SUPABASE_URL.indexOf("DEIN-PROJEKT") > -1) {
-          msg("Bitte zuerst SUPABASE_URL und SUPABASE_KEY im Code eintragen.");
+          setStatus(
+            "Bitte zuerst SUPABASE_URL und SUPABASE_KEY im Code eintragen.",
+          );
           return;
         }
         if (!window.supabase) {
-          msg("Die Supabase-Bibliothek konnte nicht geladen werden.");
+          setStatus("Supabase-Bibliothek konnte nicht geladen werden.");
           return;
         }
-        var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        var channel = client.channel("geraete-board", {
-          config: { presence: { key: token } },
+        role = "host";
+        var code = rnd(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789");
+        $("codeShow").textContent = code;
+        $("mycode").hidden = false;
+        setStatus("Warte auf den Gegner …");
+        openChannel(code, function () {});
+      };
+      $("btnJoin").onclick = function () {
+        if (SUPABASE_URL.indexOf("DEIN-PROJEKT") > -1) {
+          setStatus(
+            "Bitte zuerst SUPABASE_URL und SUPABASE_KEY im Code eintragen.",
+          );
+          return;
+        }
+        if (!window.supabase) {
+          setStatus("Supabase-Bibliothek konnte nicht geladen werden.");
+          return;
+        }
+        var code = $("codeIn").value.trim().toUpperCase();
+        if (code.length !== 4) {
+          setStatus("Bitte den 4-stelligen Code eingeben.");
+          return;
+        }
+        role = "guest";
+        setStatus("Suche Raum " + code + " …");
+        openChannel(code, function () {
+          sig({ type: "hello" });
+          helloTimer = setInterval(function () {
+            sig({ type: "hello" });
+          }, 1500);
         });
+      };
 
-        var timer = setTimeout(function () {
-          msg("Verbindungsfehler. Prüfe URL und Key.");
-        }, 10000);
+      /* ---------- Spiel ---------- */
+      var W = 640,
+        H = 320,
+        GROUND = 40,
+        FW = 40,
+        FH = 80;
+      var cv = $("cv"),
+        ctx = cv.getContext("2d");
+      var me = { x: 0, y: 0, vy: 0, kb: 0, a: 0, id: 0, hp: 100 },
+        opp = { x: 0, tx: 0, y: 0, a: 0, id: 0, hp: 100, got: false };
+      var keys = { l: 0, r: 0, j: 0, a: 0 },
+        running = false,
+        rtt = 0,
+        msgText = "",
+        lastHitId = 0,
+        roundOver = false,
+        resetAt = 0;
 
-        channel
-          .on("presence", { event: "sync" }, function () {
-            clearTimeout(timer);
-            render(channel.presenceState());
-          })
-          .subscribe(async function (status) {
-            if (status === "SUBSCRIBED") {
-              await channel.track({
-                code: code,
-                device: label(),
-                joinedAt: Date.now(),
-              });
-            } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-              clearTimeout(timer);
-              msg("Verbindungsfehler. Prüfe URL und Key.");
-            }
+      function startPos() {
+        me.x = role === "host" ? 90 : W - 90 - FW;
+        opp.x = opp.tx = role === "host" ? W - 90 - FW : 90;
+      }
+      function startGame() {
+        $("lobby").style.display = "none";
+        $("game").style.display = "block";
+        $("who").textContent = "Du: " + (role === "host" ? "links" : "rechts");
+        me.hp = 100;
+        me.y = 0;
+        me.vy = 0;
+        me.kb = 0;
+        me.a = 0;
+        opp.hp = 100;
+        startPos();
+        running = true;
+        last = performance.now();
+        acc = 0;
+        requestAnimationFrame(frame);
+        setInterval(function () {
+          send({ t: "p", ts: performance.now() });
+        }, 1000);
+      }
+
+      function step() {
+        // Bewegung
+        if (!roundOver) {
+          me.x += (keys.r - keys.l) * 4 + me.kb;
+          if (keys.j && me.y === 0) me.vy = 12;
+          if (keys.a && me.a === 0) {
+            me.a = 18;
+            me.id++;
+          }
+        }
+        me.kb *= 0.8;
+        if (Math.abs(me.kb) < 0.1) me.kb = 0;
+        me.y += me.vy;
+        me.vy -= 0.7;
+        if (me.y <= 0) {
+          me.y = 0;
+          me.vy = 0;
+        }
+        if (me.a > 0) me.a--;
+        me.x = Math.max(0, Math.min(W - FW, me.x));
+        // Gegner glätten
+        opp.x += (opp.tx - opp.x) * 0.6;
+        // Treffer prüfen: Gegner schlägt mich
+        var oppFace = me.x > opp.x ? 1 : -1;
+        if (opp.a >= 4 && opp.a <= 14 && opp.id !== lastHitId) {
+          var hx = oppFace === 1 ? opp.x + FW : opp.x - 50;
+          if (
+            hx < me.x + FW &&
+            hx + 50 > me.x &&
+            Math.abs(opp.y - me.y) < 50 &&
+            !roundOver
+          ) {
+            me.hp = Math.max(0, me.hp - 10);
+            me.kb = oppFace * 8;
+            lastHitId = opp.id;
+          }
+        }
+        // Rundenende
+        if (
+          !roundOver &&
+          performance.now() > resetAt + 1000 &&
+          (me.hp <= 0 || opp.hp <= 0)
+        ) {
+          roundOver = true;
+          msgText = me.hp <= 0 ? "Verloren" : "Gewonnen";
+          setTimeout(function () {
+            me.hp = 100;
+            me.x = role === "host" ? 90 : W - 90 - FW;
+            me.y = 0;
+            me.vy = 0;
+            me.kb = 0;
+            me.a = 0;
+            roundOver = false;
+            msgText = "";
+            resetAt = performance.now();
+          }, 3000);
+        }
+        send({
+          t: "s",
+          x: Math.round(me.x * 10) / 10,
+          y: Math.round(me.y * 10) / 10,
+          a: me.a,
+          id: me.id,
+          hp: me.hp,
+        });
+      }
+
+      function fighter(f, face, color, isMe) {
+        var gy = H - GROUND,
+          x = f.x,
+          y = gy - f.y - FH;
+        ctx.fillStyle = color;
+        ctx.fillRect(x, y + 20, FW, FH - 20);
+        ctx.fillStyle = "#f1d7b8";
+        ctx.fillRect(x + 8, y, 24, 22);
+        if (f.a > 0) {
+          var active = f.a >= 4 && f.a <= 14;
+          ctx.fillStyle = active ? "#ffd24a" : "#c9a43a";
+          var ax = face === 1 ? x + FW : x - 50;
+          ctx.fillRect(ax, y + 30, 50, 14);
+        }
+        ctx.fillStyle = "#fff";
+        ctx.font = "12px system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText(isMe ? "Du" : "Gegner", x + FW / 2, y - 6);
+      }
+      function bar(x, w, hp, right) {
+        ctx.fillStyle = "#2b2f39";
+        ctx.fillRect(x, 12, w, 14);
+        ctx.fillStyle = hp > 30 ? "#3ccf6a" : "#e5484d";
+        var cw = (w * hp) / 100;
+        ctx.fillRect(right ? x + w - cw : x, 12, cw, 14);
+      }
+      function draw() {
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = "#1a1e27";
+        ctx.fillRect(0, H - GROUND, W, GROUND);
+        var meLeft = role === "host";
+        bar(12, 250, meLeft ? me.hp : opp.hp, false);
+        bar(W - 262, 250, meLeft ? opp.hp : me.hp, true);
+        fighter(me, me.x < opp.x ? 1 : -1, "#4c7dff", true);
+        fighter(opp, me.x > opp.x ? 1 : -1, "#e5484d", false);
+        if (msgText) {
+          ctx.fillStyle = "rgba(0,0,0,.55)";
+          ctx.fillRect(0, H / 2 - 34, W, 68);
+          ctx.fillStyle = "#fff";
+          ctx.font = "bold 34px system-ui";
+          ctx.textAlign = "center";
+          ctx.fillText(msgText, W / 2, H / 2 + 12);
+        }
+      }
+
+      var last = 0,
+        acc = 0,
+        DT = 1000 / 60;
+      function frame(now) {
+        if (!running) {
+          draw();
+          return;
+        }
+        acc += Math.min(now - last, 100);
+        last = now;
+        while (acc >= DT) {
+          step();
+          acc -= DT;
+        }
+        draw();
+        requestAnimationFrame(frame);
+      }
+
+      /* ---------- Eingabe ---------- */
+      var map = {
+        ArrowLeft: "l",
+        a: "l",
+        A: "l",
+        ArrowRight: "r",
+        d: "r",
+        D: "r",
+        ArrowUp: "j",
+        w: "j",
+        W: "j",
+        " ": "j",
+        j: "a",
+        J: "a",
+        f: "a",
+        F: "a",
+        x: "a",
+        X: "a",
+      };
+      addEventListener("keydown", function (e) {
+        var k = map[e.key];
+        if (k) {
+          keys[k] = 1;
+          e.preventDefault();
+        }
+      });
+      addEventListener("keyup", function (e) {
+        var k = map[e.key];
+        if (k) {
+          keys[k] = 0;
+          e.preventDefault();
+        }
+      });
+      [
+        ["bL", "l"],
+        ["bR", "r"],
+        ["bJ", "j"],
+        ["bA", "a"],
+      ].forEach(function (p) {
+        var b = $(p[0]);
+        b.addEventListener("pointerdown", function (e) {
+          keys[p[1]] = 1;
+          e.preventDefault();
+        });
+        ["pointerup", "pointerleave", "pointercancel"].forEach(function (ev) {
+          b.addEventListener(ev, function () {
+            keys[p[1]] = 0;
           });
-
-        // Sauber abmelden beim Schließen der Seite
-        window.addEventListener("pagehide", function () {
-          channel.untrack();
-          client.removeChannel(channel);
         });
-      })();
+      });
+      addEventListener("pagehide", function () {
+        try {
+          if (pc) pc.close();
+        } catch (e) {}
+      });
     </script>
   </body>
 </html>
