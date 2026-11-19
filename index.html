@@ -4,13 +4,13 @@
     <meta charset="utf-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1, user-scalable=no"
+      content="width=device-width, initial-scale=1, user-scalable=no, viewport-fit=cover"
     />
     <title>Beat’em-up Koop</title>
     <style>
       :root {
-        --bg: #14161b;
-        --card: #1d2027;
+        --bg: #0e1015;
+        --card: rgba(24, 28, 38, 0.88);
         --text: #eceef3;
         --muted: #98a0b0;
         --line: #2b2f39;
@@ -20,122 +20,107 @@
       * {
         box-sizing: border-box;
       }
+      html,
       body {
+        height: 100%;
         margin: 0;
+        overflow: hidden;
+        overscroll-behavior: none;
         background: var(--bg);
         color: var(--text);
         font:
-          16px/1.5 system-ui,
+          16px/1.4 system-ui,
           -apple-system,
           "Segoe UI",
           Roboto,
           sans-serif;
         -webkit-user-select: none;
         user-select: none;
+        -webkit-tap-highlight-color: transparent;
       }
-      main {
-        max-width: 680px;
-        margin: 0 auto;
-        padding: 20px 12px 40px;
-      }
-      h1 {
-        font-size: 1.4rem;
-        margin: 0 0 4px;
-      }
-      .sub {
-        color: var(--muted);
-        margin: 0 0 16px;
-      }
-      .card {
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 14px;
-        padding: 16px;
-        margin-bottom: 14px;
-      }
-      .row {
-        display: flex;
-        gap: 8px;
-        flex-wrap: wrap;
-        align-items: center;
-      }
-      button,
-      input {
+      button {
         font: inherit;
-        border-radius: 10px;
+        border-radius: 12px;
         border: 1px solid var(--line);
         background: #252a33;
         color: var(--text);
         padding: 10px 14px;
-      }
-      button {
         cursor: pointer;
       }
       button.primary {
         background: var(--accent);
         color: #0b1220;
         border-color: var(--accent);
-        font-weight: 600;
-      }
-      input {
-        width: 7.5em;
-        text-transform: uppercase;
-        letter-spacing: 0.15em;
-        text-align: center;
-      }
-      .code {
-        font-size: 2rem;
         font-weight: 700;
-        letter-spacing: 0.2em;
-        color: var(--accent);
       }
-      .status {
-        color: var(--muted);
-        margin-top: 10px;
-        min-height: 1.5em;
-      }
-      #game {
-        display: none;
-      }
-      canvas {
+      button.big {
         width: 100%;
-        height: auto;
-        display: block;
-        border-radius: 12px;
-        border: 1px solid var(--line);
-        background: #0e1015;
-        touch-action: none;
+        padding: 14px;
+        font-size: 1.1rem;
       }
-      .hud {
-        display: flex;
-        justify-content: space-between;
-        color: var(--muted);
-        font-size: 0.9rem;
-        margin: 8px 2px;
-      }
-      .pad {
-        display: flex;
-        justify-content: space-between;
-        gap: 8px;
-        margin-top: 10px;
-      }
-      .pad button {
-        flex: 1;
-        padding: 16px 0;
-        font-size: 1.3rem;
-        touch-action: none;
-      }
-      .help {
-        color: var(--muted);
-        font-size: 0.85rem;
-        margin-top: 8px;
+      button:disabled {
+        opacity: 0.45;
+        cursor: default;
       }
       .muted {
         color: var(--muted);
       }
       h2 {
-        font-size: 1.05rem;
-        margin: 16px 0 8px;
+        font-size: 0.95rem;
+        margin: 12px 0 6px;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      #lobby {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: calc(10px + env(safe-area-inset-top)) 14px
+          calc(12px + env(safe-area-inset-bottom));
+        background: radial-gradient(
+          120% 80% at 50% 30%,
+          #26324f 0,
+          #0e1015 70%
+        );
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .titlebox {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 0;
+        padding: 8px 0;
+      }
+      .logo {
+        width: min(92vw, 480px);
+        max-height: 100%;
+        filter: drop-shadow(0 6px 18px rgba(229, 72, 77, 0.45));
+      }
+      #titleImg {
+        max-width: 92vw;
+        max-height: 100%;
+        object-fit: contain;
+      }
+      .panel {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        padding: 14px;
+        max-width: 520px;
+        width: 100%;
+        margin: 0 auto;
+      }
+      .code {
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--accent);
       }
       .rooms {
         list-style: none;
@@ -144,6 +129,8 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
+        max-height: 22dvh;
+        overflow: auto;
       }
       .rooms li {
         display: flex;
@@ -152,12 +139,12 @@
         background: #252a33;
         border: 1px solid var(--line);
         border-radius: 12px;
-        padding: 12px 14px;
+        padding: 11px 14px;
       }
       .rooms li.room {
         cursor: pointer;
       }
-      .rooms li.room:hover {
+      .rooms li.room:active {
         border-color: var(--accent);
       }
       .rooms li.full {
@@ -176,16 +163,57 @@
         border-radius: 99px;
         padding: 1px 8px;
       }
-      button:disabled {
-        opacity: 0.45;
-        cursor: default;
+      .status {
+        color: var(--muted);
+        margin-top: 8px;
+        min-height: 1.3em;
+        font-size: 0.9rem;
+      }
+      #mute {
+        position: fixed;
+        top: calc(8px + env(safe-area-inset-top));
+        right: 10px;
+        z-index: 5;
+        padding: 6px 10px;
+        background: rgba(0, 0, 0, 0.4);
+      }
+      #game {
+        position: fixed;
+        inset: 0;
+        display: none;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background: #07080c;
+      }
+      canvas {
+        width: min(100vw, calc(100dvh * 2));
+        height: auto;
+        aspect-ratio: 2/1;
+        display: block;
+        touch-action: none;
+      }
+      .hud {
+        position: fixed;
+        top: calc(6px + env(safe-area-inset-top));
+        left: 10px;
+        font-size: 0.75rem;
+        color: var(--muted);
+        pointer-events: none;
       }
       .pad {
         display: none;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
         justify-content: space-between;
         align-items: flex-end;
-        gap: 8px;
-        margin-top: 10px;
+        padding: 10px 18px calc(12px + env(safe-area-inset-bottom));
+        pointer-events: none;
+      }
+      .pad > * {
+        pointer-events: auto;
       }
       @media (pointer: coarse), (max-width: 700px) {
         .pad {
@@ -219,7 +247,6 @@
         align-items: flex-end;
       }
       .pad .btns button {
-        flex: none;
         width: 84px;
         height: 84px;
         border-radius: 50%;
@@ -236,52 +263,54 @@
         color: var(--muted);
       }
       #bK {
-        width: 96px;
-        height: 96px;
+        width: 96px !important;
+        height: 96px !important;
       }
-      .stage {
-        position: relative;
-      }
-      @media (orientation: landscape) and (pointer: coarse) {
-        canvas {
-          max-height: calc(100dvh - 8px);
-          width: auto;
-          max-width: 100%;
-          margin: 0 auto;
-        }
-        .pad {
-          position: absolute;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          margin: 0;
-          padding: 6px 14px;
-          pointer-events: none;
-        }
-        .pad > * {
-          pointer-events: auto;
-        }
-        .hud,
-        .help {
-          display: none;
-        }
+      #btnAgain {
+        position: fixed;
+        left: 50%;
+        top: 62%;
+        transform: translateX(-50%);
+        z-index: 4;
       }
     </style>
   </head>
   <body>
-    <main>
-      <h1>Beat’em-up Koop</h1>
-      <p class="sub">
-        Laufe durch das Level und besiege die Gegner, allein oder zu zweit (max.
-        2 Spieler).
-      </p>
-
-      <section class="card" id="lobby">
+    <section id="lobby">
+      <div class="topbar"><span class="muted" id="online"></span></div>
+      <div class="titlebox">
+        <svg
+          class="logo"
+          id="logo"
+          viewBox="0 0 400 200"
+          role="img"
+          aria-label="Beat’em-up Koop"
+        >
+          <defs>
+            <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffe27a" />
+              <stop offset="1" stop-color="#e5484d" />
+            </linearGradient>
+          </defs>
+          <g
+            transform="skewX(-8) translate(18 0)"
+            font-family="Impact,Haettenschweiler,'Arial Black',sans-serif"
+            font-weight="900"
+            stroke="#12141a"
+            stroke-width="7"
+            paint-order="stroke"
+            stroke-linejoin="round"
+          >
+            <text x="14" y="82" font-size="82" fill="url(#lg)">BEAT’EM</text>
+            <text x="86" y="158" font-size="82" fill="url(#lg)">UP!</text>
+            <text x="236" y="156" font-size="38" fill="#6b9bff">KOOP</text>
+          </g>
+        </svg>
+        <img id="titleImg" alt="Titelbild" hidden />
+      </div>
+      <div class="panel">
         <div id="lobbyView">
-          <div class="row" style="justify-content: space-between">
-            <button class="primary" id="btnOpen">Raum öffnen</button>
-            <span class="muted" id="online"></span>
-          </div>
+          <button class="primary big" id="btnOpen">Raum öffnen</button>
           <h2>Offene Räume</h2>
           <ul class="rooms" id="rooms"></ul>
         </div>
@@ -289,36 +318,33 @@
           <div class="muted">Dein Raum – Spieler im Raum</div>
           <div class="code" id="roomCount">1 von 2</div>
           <ul class="rooms" id="members" style="margin-top: 8px"></ul>
-          <div class="row" style="margin-top: 12px">
-            <button class="primary" id="btnStart" disabled>
-              Spiel starten
-            </button>
-            <button id="btnLeave">Raum verlassen</button>
+          <div style="display: flex; gap: 8px; margin-top: 12px">
+            <button class="primary" id="btnStart" style="flex: 1" disabled>
+              Spiel starten</button
+            ><button id="btnLeave">Verlassen</button>
           </div>
-          <div class="muted" id="roomHint" style="margin-top: 8px"></div>
+          <div
+            class="muted"
+            id="roomHint"
+            style="margin-top: 8px; font-size: 0.9rem"
+          ></div>
         </div>
         <div class="status" id="status">Verbinde …</div>
-      </section>
-
-      <section id="game">
-        <div class="stage">
-          <canvas id="cv" width="640" height="320"></canvas>
-          <div class="pad">
-            <div class="joy" id="joy"><div class="knob" id="knob"></div></div>
-            <div class="btns">
-              <button id="bP">👊<small>Schlag</small></button
-              ><button id="bK">🦵<small>Tritt</small></button>
-            </div>
-          </div>
+      </div>
+    </section>
+    <section id="game">
+      <canvas id="cv" width="640" height="320"></canvas>
+      <div class="hud"><span id="who"></span> <span id="ping"></span></div>
+      <div class="pad">
+        <div class="joy" id="joy"><div class="knob" id="knob"></div></div>
+        <div class="btns">
+          <button id="bP">👊<small>Schlag</small></button
+          ><button id="bK">🦵<small>Tritt</small></button>
         </div>
-        <div class="hud"><span id="who"></span><span id="ping"></span></div>
-        <button class="primary" id="btnAgain" hidden>Nochmal spielen</button>
-        <div class="help">
-          Tastatur: WASD/Pfeile laufen, J = Schlag (schnell), K = Tritt
-          (stärker, aber langsamer). Handy: Joystick links, Schlag/Tritt rechts.
-        </div>
-      </section>
-    </main>
+      </div>
+      <button class="primary" id="btnAgain" hidden>Nochmal spielen</button>
+    </section>
+    <button id="mute" aria-label="Ton an/aus">🔊</button>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.57.4/dist/umd/supabase.min.js"></script>
     <script>
@@ -343,6 +369,146 @@
           s += al[Math.floor(Math.random() * al.length)];
         return s;
       }
+
+      /* ---------- Ton: Musik und Effekte werden direkt im Browser erzeugt (keine Audiodateien) ---------- */
+      var TITLE_IMG = ""; // optional: Pfad zu eigenem Titelbild, z. B. 'titel.png'
+      if (TITLE_IMG) {
+        $("titleImg").src = TITLE_IMG;
+        $("titleImg").hidden = false;
+        $("logo").style.display = "none";
+      }
+      var AC = null,
+        master = null,
+        noiseBuf = null,
+        musicMode = null,
+        seqT = null,
+        seqI = 0,
+        seqNext = 0,
+        muted = false;
+      function audioInit() {
+        if (!AC) {
+          try {
+            AC = new (window.AudioContext || window.webkitAudioContext)();
+            master = AC.createGain();
+            master.gain.value = muted ? 0 : 0.5;
+            master.connect(AC.destination);
+            noiseBuf = AC.createBuffer(1, AC.sampleRate, AC.sampleRate);
+            var d = noiseBuf.getChannelData(0);
+            for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+          } catch (e) {
+            AC = null;
+            return;
+          }
+          seqRestart();
+        }
+        if (AC.state === "suspended") AC.resume();
+      }
+      ["pointerdown", "keydown", "touchstart"].forEach(function (ev) {
+        addEventListener(ev, audioInit, { passive: true });
+      });
+      function mf(n) {
+        return 440 * Math.pow(2, (n - 69) / 12);
+      }
+      function tone(f, t, d, type, v, f2) {
+        var o = AC.createOscillator(),
+          g = AC.createGain();
+        o.type = type;
+        o.frequency.setValueAtTime(f, t);
+        if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
+        g.gain.setValueAtTime(v, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + d);
+        o.connect(g);
+        g.connect(master);
+        o.start(t);
+        o.stop(t + d + 0.03);
+      }
+      function nz(t, d, v, hp) {
+        var s = AC.createBufferSource(),
+          f = AC.createBiquadFilter(),
+          g = AC.createGain();
+        s.buffer = noiseBuf;
+        f.type = "highpass";
+        f.frequency.value = hp;
+        g.gain.setValueAtTime(v, t);
+        g.gain.exponentialRampToValueAtTime(0.001, t + d);
+        s.connect(f);
+        f.connect(g);
+        g.connect(master);
+        s.start(t);
+        s.stop(t + d + 0.03);
+      }
+      var BASS = [
+          33, 33, 36, 33, 33, 33, 38, 36, 33, 33, 36, 33, 31, 31, 34, 35,
+        ],
+        LEAD = [69, 72, 76, 72, 69, 72, 79, 76];
+      function playStep(i, t) {
+        var k = i % 16;
+        if (musicMode === "battle") {
+          if (k % 4 === 0) tone(150, t, 0.16, "sine", 0.7, 45);
+          if (k === 4 || k === 12) {
+            nz(t, 0.14, 0.35, 1500);
+            tone(190, t, 0.08, "triangle", 0.25);
+          }
+          if (k % 2 === 0) nz(t, 0.04, 0.12, 7000);
+          tone(mf(BASS[k]), t, 0.13, "sawtooth", 0.16);
+          if (k % 2 === 0)
+            tone(mf(LEAD[(k >> 1) % 8]), t, 0.18, "square", 0.06);
+        } else {
+          if (k % 8 === 0) tone(130, t, 0.22, "sine", 0.5, 45);
+          if (k === 4 || k === 12) nz(t, 0.05, 0.1, 7000);
+          if (k % 4 === 0)
+            tone(mf([45, 45, 41, 43][k >> 2]), t, 0.5, "triangle", 0.2);
+          tone(
+            mf([57, 60, 64, 67, 64, 60, 55, 60][k >> 1] + (k % 2 ? 12 : 0)),
+            t,
+            0.3,
+            "sine",
+            0.07,
+          );
+        }
+      }
+      function seqTick() {
+        var spb = 60 / (musicMode === "battle" ? 150 : 88) / 4;
+        while (seqNext < AC.currentTime + 0.2) {
+          playStep(seqI++, seqNext);
+          seqNext += spb;
+        }
+      }
+      function seqRestart() {
+        clearInterval(seqT);
+        seqT = null;
+        if (!AC || !musicMode) return;
+        seqI = 0;
+        seqNext = AC.currentTime + 0.08;
+        seqT = setInterval(seqTick, 50);
+      }
+      function music(m) {
+        if (m === musicMode) return;
+        musicMode = m;
+        seqRestart();
+      }
+      function sfx(k) {
+        if (!AC || muted) return;
+        var t = AC.currentTime + 0.005;
+        if (k === "w") nz(t, 0.07, 0.14, 2500);
+        else if (k === "h") {
+          nz(t, 0.07, 0.5, 900);
+          tone(190, t, 0.11, "sine", 0.7, 80);
+        } else if (k === "H") {
+          nz(t, 0.14, 0.7, 500);
+          tone(140, t, 0.22, "sine", 0.9, 40);
+          tone(90, t, 0.12, "square", 0.15, 50);
+        } else if (k === "u") {
+          tone(260, t, 0.2, "sawtooth", 0.25, 90);
+          nz(t, 0.1, 0.3, 1200);
+        }
+      }
+      $("mute").onclick = function () {
+        muted = !muted;
+        $("mute").textContent = muted ? "🔇" : "🔊";
+        if (master) master.gain.value = muted ? 0 : 0.5;
+      };
+      music("lobby"); // startet nach der ersten Berührung (Browser-Vorgabe)
 
       /* ---------- Lobby (Presence) + Verbindungsaufbau (Broadcast), Spiel selbst läuft über WebRTC ---------- */
       var client = null,
@@ -770,9 +936,9 @@
         2: { d: 26, a: 9, b: 15, r: 64, dmg: 18, kb: 9, st: 20 },
       };
       var KIND = [
-        { hp: 30, sp: 1.1, dmg: 8, r: 34, c: "#c0504d", w: 30, h: 58 },
-        { hp: 70, sp: 0.9, dmg: 12, r: 38, c: "#8e44ad", w: 38, h: 70 },
-        { hp: 220, sp: 0.8, dmg: 16, r: 46, c: "#d48a1a", w: 50, h: 86 },
+        { hp: 30, sp: 1.1, dmg: 8, r: 34, c: "#c0504d", w: 34, h: 66 },
+        { hp: 70, sp: 0.9, dmg: 12, r: 38, c: "#8e44ad", w: 42, h: 78 },
+        { hp: 220, sp: 0.8, dmg: 16, r: 46, c: "#d48a1a", w: 54, h: 94 },
       ];
       var WAVES = [
         {
@@ -842,6 +1008,7 @@
         P[1].present = multi;
         P[0].tx = P[0].x;
         P[0].tz = P[0].z;
+        if (started) music("battle");
         E = [];
         cam = camT = 0;
         waveI = 0;
@@ -861,7 +1028,7 @@
         started = true;
         me = role === "guest" ? 1 : 0;
         $("lobby").style.display = "none";
-        $("game").style.display = "block";
+        $("game").style.display = "flex";
         $("who").textContent = multi
           ? "Du bist Spieler " + (me + 1)
           : "Einzelspiel";
@@ -895,6 +1062,7 @@
           camT = m.c;
           score = m.s;
           over = m.o;
+          if (over) music(null);
           waveI = m.w;
           wLock = m.l ? 1 : -1;
           var h = P[0];
@@ -904,12 +1072,14 @@
           h.at = m.p[3];
           h.af = m.p[4];
           h.dead = !!m.p[5];
+          if (m.h[0] < h.hp) sfx("u");
           h.hp = m.h[0];
           var g = P[1];
           g.hp = m.h[1];
           if (g.hp <= 0) g.dead = true;
           if (m.hg[0] > lastHg) {
             lastHg = m.hg[0];
+            sfx("u");
             g.st = 14;
             g.kx = m.hg[1] * 4;
             g.fl = 8;
@@ -922,6 +1092,7 @@
           });
           E = m.e.map(function (a) {
             var o = old[a[0]] || { x: a[2], z: a[3] };
+            if (old[a[0]] && a[4] < o.hp) sfx(o.hp - a[4] >= 15 ? "H" : "h");
             return {
               id: a[0],
               k: a[1],
@@ -1006,11 +1177,13 @@
             p.af = 0;
             p.id++;
             buf.k = buf.p = 0;
+            sfx("w");
           } else if (buf.p > 0) {
             p.at = 1;
             p.af = 0;
             p.id++;
             buf.k = buf.p = 0;
+            sfx("w");
           }
         }
         if (buf.p > 0) buf.p--;
@@ -1022,6 +1195,7 @@
         p.z = Math.max(0, Math.min(BZ, p.z));
       }
       function hurtPlayer(i, d, dir) {
+        sfx("u");
         var p = P[i];
         p.hp = Math.max(0, p.hp - d);
         p.inv = 45;
@@ -1054,6 +1228,7 @@
             return;
           e.hb[i] = p.id;
           e.hp -= a.dmg;
+          sfx(p.at === 2 ? "H" : "h");
           score += a.dmg;
           e.f = -p.f;
           if (e.hp <= 0) {
@@ -1206,6 +1381,7 @@
           if (P[1].present) applyAttack(P[1], 1);
           stepEnemies();
           stepWorld();
+          if (over) music(null);
           if (multi && tick % 2 === 0) sendSnap();
         } else {
           var g = P[1],
@@ -1231,53 +1407,137 @@
       }
 
       /* ----- Zeichnen ----- */
-      function figure(x, z, f, c, w, h, at, af, fl, lie, ph, windup, strike) {
+      var SP1 = {
+          sk: "#f0c8a0",
+          top: "#2f6fed",
+          pants: "#1d2744",
+          hair: "#2a1a10",
+          acc: "band",
+          ac: "#e5484d",
+        },
+        SP2 = {
+          sk: "#e8b890",
+          top: "#1fae6b",
+          pants: "#183a2c",
+          hair: "#f0c24a",
+          acc: "band",
+          ac: "#ffd24a",
+        },
+        KS = [
+          {
+            sk: "#e0b890",
+            top: "#c0392b",
+            pants: "#2a2a33",
+            hair: "#8e44ad",
+            acc: "mohawk",
+          },
+          {
+            sk: "#d9a77c",
+            top: "#4a3a7a",
+            pants: "#1c1c2e",
+            hair: "#222",
+            acc: "hood",
+          },
+          {
+            sk: "#c98f68",
+            top: "#d48a1a",
+            pants: "#3a2a10",
+            hair: "#111",
+            acc: "shades",
+          },
+        ];
+      function limb(a, b, c, d, w, col) {
+        ctx.strokeStyle = col;
+        ctx.lineWidth = w;
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(a, b);
+        ctx.lineTo(c, d);
+        ctx.stroke();
+      }
+      function dot(x, y, r, c) {
+        ctx.fillStyle = c;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, 7);
+        ctx.fill();
+      }
+      function figure(x, z, f, S, w, h, at, af, fl, lie, ph, windup, strike) {
         var sx = x - cam,
           fy = BAND + z;
-        ctx.fillStyle = "rgba(0,0,0,.35)";
+        ctx.fillStyle = "rgba(0,0,0,.4)";
         ctx.beginPath();
-        ctx.ellipse(sx, fy, w * 0.6, 6, 0, 0, 7);
+        ctx.ellipse(sx, fy, w * 0.65, 6, 0, 0, 7);
         ctx.fill();
         ctx.save();
         ctx.translate(sx, fy);
+        ctx.scale(f, 1);
         if (lie) {
-          ctx.rotate(-f * 1.4);
-          ctx.globalAlpha = Math.max(0.35, lie);
+          ctx.rotate(-1.45);
+          ctx.globalAlpha = Math.max(0.4, lie);
+        } else if (fl) ctx.rotate(-0.12);
+        var sw = Math.sin(ph) * 9,
+          hip = -h * 0.44,
+          sh = -h * 0.74,
+          hd = -h * 0.9,
+          s = w / 36,
+          a = at ? ATK[at] : null,
+          act = a && af >= a.a && af <= a.b,
+          lw = 11 * s,
+          O = "#12141a";
+        limb(0, hip, -sw - 3, -4, lw, S.pants);
+        dot(-sw - 2, -3, 6 * s, O); // hinteres Bein
+        limb(-2, sh + 2, -9, sh + h * 0.2, 8 * s, S.sk); // hinterer Arm
+        limb(0, hip, 0, sh, w * 0.64, S.top);
+        limb(-w * 0.3, hip - 2, w * 0.3, hip - 2, 4, "rgba(0,0,0,.35)"); // Oberkörper, Gürtel
+        limb(-w * 0.22, sh + 2, -w * 0.22, hip - 4, 3, "rgba(255,255,255,.18)");
+        if (at === 2 && act) {
+          limb(0, hip, a.r - 12, hip - 8, lw, S.pants);
+          dot(a.r - 8, hip - 8, 7 * s, O);
+        } // Tritt
+        else {
+          limb(0, hip, sw + 3, -4, lw, S.pants);
+          dot(sw + 5, -3, 6 * s, O);
+        } // vorderes Bein
+        if (S.acc === "hood") dot(-2, hd + 1, h * 0.15, S.top);
+        dot(2, hd, h * 0.12, S.sk);
+        if (S.acc !== "hood") {
+          ctx.fillStyle = S.hair;
+          ctx.beginPath();
+          ctx.arc(1, hd - 1, h * 0.125, Math.PI * 0.95, Math.PI * 2.05);
+          ctx.fill();
         }
-        var bob = Math.sin(ph || 0) * 2;
-        ctx.fillStyle = c;
-        ctx.fillRect(-w / 2, -h + 22 + bob, w, h - 22);
-        ctx.fillStyle = "#f1d7b8";
-        ctx.beginPath();
-        ctx.arc(f * 2, -h + 11 + bob, 11, 0, 7);
-        ctx.fill();
-        ctx.fillStyle = "#f1d7b8";
-        var a = at ? ATK[at] : null,
-          act = a && af >= a.a && af <= a.b;
-        if (at === 1 && act)
-          ctx.fillRect(
-            f > 0 ? w / 2 - 4 : -w / 2 - a.r + 10,
-            -h * 0.62,
-            a.r - 6,
-            9,
-          );
-        else if (at === 2 && act) {
-          ctx.fillStyle = "#d9d9e0";
-          ctx.fillRect(
-            f > 0 ? w / 2 - 4 : -w / 2 - a.r + 10,
-            -h * 0.38,
-            a.r - 6,
-            12,
-          );
-        } else if (windup) {
-          ctx.fillRect(f > 0 ? w / 2 - 2 : -w / 2 - 12, -h * 0.6, 14, 9);
+        if (S.acc === "band") {
+          ctx.fillStyle = S.ac;
+          ctx.fillRect(-8, hd - 7, 21, 4);
+          ctx.fillRect(-18, hd - 6, 11, 3);
+        }
+        if (S.acc === "mohawk") {
+          ctx.fillStyle = S.hair;
+          ctx.fillRect(-2, hd - h * 0.2, 9, h * 0.1);
+        }
+        if (S.acc === "shades") {
+          ctx.fillStyle = "#0a0a0a";
+          ctx.fillRect(3, hd - 4, 11, 5);
+        } else dot(8, hd, 1.8, O);
+        var ax, ay;
+        if (at === 1 && act) {
+          ax = a.r - 8;
+          ay = sh + 3;
         } else if (strike) {
-          ctx.fillRect(f > 0 ? w / 2 - 4 : -w / 2 - 30, -h * 0.55, 34, 10);
+          ax = 32;
+          ay = sh + 4;
+        } else if (windup) {
+          ax = -10;
+          ay = sh + 8;
+        } else {
+          ax = 9 + sw * 0.3;
+          ay = sh + h * 0.2;
         }
-        if (fl > 0) {
-          ctx.globalAlpha = 0.6;
-          ctx.fillStyle = "#fff";
-          ctx.fillRect(-w / 2, -h + 11, w, h - 11);
+        limb(2, sh + 2, ax, ay, 9 * s, S.sk);
+        dot(ax, ay, 5.5 * s, S.sk); // vorderer Arm + Faust
+        if (fl) {
+          limb(0, hip, 0, sh, w * 0.64, "rgba(255,255,255,.75)");
+          dot(2, hd, h * 0.12, "rgba(255,255,255,.7)");
         }
         ctx.restore();
       }
@@ -1331,9 +1591,9 @@
                   p.x,
                   p.z,
                   p.f,
-                  p.dead ? "#556" : col,
-                  34,
-                  64,
+                  i ? SP2 : SP1,
+                  36,
+                  68,
                   p.at,
                   p.af,
                   p.fl && p.fl % 4 < 2,
@@ -1357,14 +1617,14 @@
                 e.x,
                 e.z,
                 e.f,
-                K.c,
+                KS[e.k],
                 K.w,
                 K.h,
                 0,
                 0,
                 e.st === 2 && e.t % 4 < 2,
                 e.st === 3 ? e.t / 40 : 0,
-                0,
+                e.x * 0.18,
                 e.st === 1 && e.t > 10,
                 e.st === 1 && e.t <= 10,
               );
