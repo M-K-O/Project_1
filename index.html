@@ -130,6 +130,56 @@
         font-size: 0.85rem;
         margin-top: 8px;
       }
+      .muted {
+        color: var(--muted);
+      }
+      h2 {
+        font-size: 1.05rem;
+        margin: 16px 0 8px;
+      }
+      .rooms {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .rooms li {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #252a33;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
+      .rooms li.room {
+        cursor: pointer;
+      }
+      .rooms li.room:hover {
+        border-color: var(--accent);
+      }
+      .rooms li.full {
+        opacity: 0.55;
+        cursor: default;
+      }
+      .rooms .cnt {
+        margin-left: auto;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .rooms .tag {
+        font-size: 0.72rem;
+        background: var(--accent);
+        color: #0b1220;
+        border-radius: 99px;
+        padding: 1px 8px;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
     </style>
   </head>
   <body>
@@ -141,24 +191,27 @@
       </p>
 
       <section class="card" id="lobby">
-        <div class="row">
-          <button class="primary" id="btnCreate">Raum erstellen</button>
-          <span style="color: var(--muted)">oder</span>
-          <input
-            id="codeIn"
-            maxlength="4"
-            placeholder="CODE"
-            autocomplete="off"
-          />
-          <button id="btnJoin">Beitreten</button>
+        <div id="lobbyView">
+          <div class="row" style="justify-content: space-between">
+            <button class="primary" id="btnOpen">Raum öffnen</button>
+            <span class="muted" id="online"></span>
+          </div>
+          <h2>Offene Räume</h2>
+          <ul class="rooms" id="rooms"></ul>
         </div>
-        <div id="mycode" style="margin-top: 14px" hidden>
-          <small style="color: var(--muted)"
-            >Dein Raumcode – gib ihn dem Gegner:</small
-          >
-          <div class="code" id="codeShow">----</div>
+        <div id="roomView" hidden>
+          <div class="muted">Dein Raum – Spieler im Raum</div>
+          <div class="code" id="roomCount">1 von 2</div>
+          <ul class="rooms" id="members" style="margin-top: 8px"></ul>
+          <div class="row" style="margin-top: 12px">
+            <button class="primary" id="btnStart" disabled>
+              Spiel starten
+            </button>
+            <button id="btnLeave">Raum verlassen</button>
+          </div>
+          <div class="muted" id="roomHint" style="margin-top: 8px"></div>
         </div>
-        <div class="status" id="status"></div>
+        <div class="status" id="status">Verbinde …</div>
       </section>
 
       <section id="game">
@@ -172,8 +225,7 @@
         </div>
         <div class="help">
           Tastatur: A/D oder ←/→ laufen, W/↑/Leertaste springen, J/F/X schlagen.
-          Der Gegner steht in dem Moment, in dem er sich verbindet, auf der
-          anderen Seite.
+          Der Ersteller des Raums steht links, der Mitspieler rechts.
         </div>
       </section>
     </main>
@@ -202,39 +254,288 @@
         return s;
       }
 
-      /* ---------- Verbindung: Supabase nur zur Vermittlung, Spiel läuft über WebRTC ---------- */
+      /* ---------- Lobby (Presence) + Verbindungsaufbau (Broadcast), Spiel selbst läuft über WebRTC ---------- */
       var client = null,
         channel = null,
         pc = null,
         dc = null,
         role = null,
         pendingIce = [],
-        helloTimer = null,
-        connected = false;
+        connected = false,
+        startTimer = null;
+      var pid = rnd(10, "abcdefghijklmnopqrstuvwxyz0123456789");
+      var myName = "Spieler-" + rnd(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789");
+      var myRoom = null,
+        isHost = false,
+        joinedAt = 0,
+        peerPid = null,
+        hostPid = null,
+        players = [];
 
       function sig(m) {
+        m.from = pid;
         channel.send({ type: "broadcast", event: "signal", payload: m });
       }
-
-      function openChannel(code, onReady) {
-        client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        channel = client.channel("kampf-" + code, {
-          config: { broadcast: { self: false } },
+      function track() {
+        return channel.track({
+          pid: pid,
+          name: myName,
+          room: myRoom,
+          isHost: isHost,
+          joinedAt: joinedAt,
         });
+      }
+
+      function roomMembers(id) {
+        return players
+          .filter(function (p) {
+            return p.room === id;
+          })
+          .sort(function (a, b) {
+            return (
+              Number(b.isHost) - Number(a.isHost) ||
+              a.joinedAt - b.joinedAt ||
+              (a.pid < b.pid ? -1 : 1)
+            );
+          });
+      }
+      function membersOf(id) {
+        // wie roomMembers, enthält aber sofort auch mich selbst
+        var m = roomMembers(id);
+        if (
+          id === myRoom &&
+          !m.some(function (p) {
+            return p.pid === pid;
+          })
+        )
+          m = m
+            .concat([
+              {
+                pid: pid,
+                name: myName,
+                room: myRoom,
+                isHost: isHost,
+                joinedAt: joinedAt,
+              },
+            ])
+            .sort(function (a, b) {
+              return (
+                Number(b.isHost) - Number(a.isHost) ||
+                a.joinedAt - b.joinedAt ||
+                (a.pid < b.pid ? -1 : 1)
+              );
+            });
+        return m;
+      }
+
+      function init() {
+        if (SUPABASE_URL.indexOf("DEIN-PROJEKT") > -1) {
+          setStatus(
+            "Bitte zuerst SUPABASE_URL und SUPABASE_KEY im Code eintragen.",
+          );
+          $("btnOpen").disabled = true;
+          return;
+        }
+        if (!window.supabase) {
+          setStatus("Supabase-Bibliothek konnte nicht geladen werden.");
+          $("btnOpen").disabled = true;
+          return;
+        }
+        client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        channel = client.channel("kampf-lobby", {
+          config: { presence: { key: pid }, broadcast: { self: false } },
+        });
+        channel.on("presence", { event: "sync" }, onSync);
         channel.on("broadcast", { event: "signal" }, function (e) {
           handleSignal(e.payload).catch(function () {});
         });
         channel.subscribe(function (st) {
-          if (st === "SUBSCRIBED") onReady();
-          else if (st === "CHANNEL_ERROR" || st === "TIMED_OUT")
+          if (st === "SUBSCRIBED") {
+            track();
+            setStatus("");
+          } else if (st === "CHANNEL_ERROR" || st === "TIMED_OUT")
             setStatus("Verbindungsfehler zu Supabase. Prüfe URL und Key.");
         });
       }
 
+      function onSync() {
+        var st = channel.presenceState();
+        players = Object.keys(st).map(function (k) {
+          return st[k][st[k].length - 1];
+        });
+        if (myRoom && !connected) {
+          var m = roomMembers(myRoom);
+          var host = m.filter(function (p) {
+            return p.isHost;
+          })[0];
+          if (!host) {
+            leaveRoom("Der Ersteller hat den Raum geschlossen.");
+            return;
+          }
+          hostPid = host.pid;
+          var rank = m
+            .map(function (p) {
+              return p.pid;
+            })
+            .indexOf(pid);
+          if (!isHost && rank >= 2) {
+            leaveRoom("Der Raum war schon voll.");
+            return;
+          }
+          var other = m.slice(0, 2).filter(function (p) {
+            return p.pid !== pid;
+          })[0];
+          peerPid = other ? other.pid : null;
+        }
+        render();
+      }
+
+      function render() {
+        var inRoom = !!myRoom;
+        $("lobbyView").hidden = inRoom;
+        $("roomView").hidden = !inRoom;
+        $("online").textContent = players.length + " online";
+        if (!inRoom) {
+          var ul = $("rooms");
+          ul.innerHTML = "";
+          var hosts = players.filter(function (p) {
+            return p.isHost && p.room;
+          });
+          if (!hosts.length) {
+            var e = document.createElement("li");
+            e.className = "muted";
+            e.textContent = "Noch kein Raum offen. Öffne den ersten.";
+            ul.appendChild(e);
+          }
+          hosts.forEach(function (h) {
+            var n = Math.min(2, roomMembers(h.room).length),
+              full = n >= 2;
+            var li = document.createElement("li");
+            li.className = "room" + (full ? " full" : "");
+            var nm = document.createElement("span");
+            nm.textContent = "Raum von " + h.name;
+            var c = document.createElement("span");
+            c.className = "cnt";
+            c.textContent = n + " von 2" + (full ? " · voll" : "");
+            li.appendChild(nm);
+            li.appendChild(c);
+            if (!full)
+              li.onclick = function () {
+                joinRoom(h.room);
+              };
+            ul.appendChild(li);
+          });
+        } else {
+          var m = membersOf(myRoom).slice(0, 2),
+            n = m.length;
+          $("roomCount").textContent = n + " von 2";
+          var ml = $("members");
+          ml.innerHTML = "";
+          m.forEach(function (p) {
+            var li = document.createElement("li");
+            var nm = document.createElement("span");
+            nm.textContent = p.name;
+            li.appendChild(nm);
+            if (p.isHost) {
+              var t = document.createElement("span");
+              t.className = "tag";
+              t.textContent = "Ersteller";
+              li.appendChild(t);
+            }
+            if (p.pid === pid) {
+              var t2 = document.createElement("span");
+              t2.className = "tag";
+              t2.textContent = "Du";
+              li.appendChild(t2);
+            }
+            ml.appendChild(li);
+          });
+          $("btnStart").hidden = !isHost;
+          $("btnStart").disabled = !(isHost && n === 2 && peerPid && !pc);
+          $("roomHint").textContent = isHost
+            ? n < 2
+              ? "Warte auf einen Mitspieler …"
+              : "Ein Mitspieler ist da. Du kannst starten."
+            : "Warte, bis der Ersteller das Spiel startet …";
+        }
+      }
+
+      function openRoom() {
+        if (myRoom || !channel) return;
+        myRoom = pid;
+        isHost = true;
+        role = "host";
+        joinedAt = Date.now();
+        hostPid = pid;
+        peerPid = null;
+        track();
+        render();
+      }
+      function joinRoom(id) {
+        if (myRoom || !channel) return;
+        if (roomMembers(id).length >= 2) return;
+        myRoom = id;
+        isHost = false;
+        role = "guest";
+        joinedAt = Date.now();
+        hostPid = id;
+        track();
+        render();
+      }
+      function resetPC() {
+        clearTimeout(startTimer);
+        try {
+          if (pc) pc.close();
+        } catch (e) {}
+        pc = null;
+        dc = null;
+        pendingIce = [];
+      }
+      function leaveRoom(text) {
+        resetPC();
+        myRoom = null;
+        isHost = false;
+        role = null;
+        peerPid = null;
+        hostPid = null;
+        if (channel && !connected) track();
+        setStatus(text || "");
+        render();
+      }
+      $("btnOpen").onclick = openRoom;
+      $("btnLeave").onclick = function () {
+        leaveRoom("");
+      };
+      $("btnStart").onclick = async function () {
+        if (!isHost || !peerPid || pc) return;
+        $("btnStart").disabled = true;
+        setStatus("Verbinde direkt …");
+        createPC();
+        dc = pc.createDataChannel("game", {
+          ordered: false,
+          maxRetransmits: 0,
+        });
+        setupDC();
+        var o = await pc.createOffer();
+        await pc.setLocalDescription(o);
+        sig({ type: "offer", to: peerPid, sdp: { type: o.type, sdp: o.sdp } });
+        startTimer = setTimeout(function () {
+          if (!connected) {
+            resetPC();
+            setStatus(
+              "Direktverbindung fehlgeschlagen (Firewall/Mobilfunk). Dafür bräuchte man einen TURN-Server.",
+            );
+            render();
+          }
+        }, 15000);
+      };
+
       function createPC() {
         pc = new RTCPeerConnection({ iceServers: STUN });
         pc.onicecandidate = function (e) {
-          if (e.candidate) sig({ type: "ice", cand: e.candidate.toJSON() });
+          var to = isHost ? peerPid : hostPid;
+          if (e.candidate && to)
+            sig({ type: "ice", to: to, cand: e.candidate.toJSON() });
         };
         pc.onconnectionstatechange = function () {
           if (
@@ -244,10 +545,6 @@
               pc.connectionState === "closed")
           )
             onLost();
-          if (!connected && pc.connectionState === "failed")
-            setStatus(
-              "Direktverbindung fehlgeschlagen (Firewall/Mobilfunk). Dafür bräuchte man einen TURN-Server.",
-            );
         };
       }
       function flushIce() {
@@ -257,19 +554,15 @@
         pendingIce = [];
       }
       async function handleSignal(m) {
-        if (m.type === "hello" && role === "host" && !pc) {
-          createPC();
-          dc = pc.createDataChannel("game", {
-            ordered: false,
-            maxRetransmits: 0,
-          });
-          setupDC();
-          var o = await pc.createOffer();
-          await pc.setLocalDescription(o);
-          sig({ type: "offer", sdp: { type: o.type, sdp: o.sdp } });
-        } else if (m.type === "offer" && role === "guest" && !pc) {
-          clearInterval(helloTimer);
-          setStatus("Verbinde direkt …");
+        if (m.to !== pid || connected) return;
+        if (
+          m.type === "offer" &&
+          !isHost &&
+          myRoom &&
+          m.from === hostPid &&
+          !pc
+        ) {
+          setStatus("Spiel startet, verbinde direkt …");
           createPC();
           pc.ondatachannel = function (e) {
             dc = e.channel;
@@ -279,11 +572,16 @@
           flushIce();
           var a = await pc.createAnswer();
           await pc.setLocalDescription(a);
-          sig({ type: "answer", sdp: { type: a.type, sdp: a.sdp } });
+          sig({
+            type: "answer",
+            to: m.from,
+            sdp: { type: a.type, sdp: a.sdp },
+          });
         } else if (
           m.type === "answer" &&
-          role === "host" &&
+          isHost &&
           pc &&
+          m.from === peerPid &&
           !pc.remoteDescription
         ) {
           await pc.setRemoteDescription(m.sdp);
@@ -297,9 +595,11 @@
       function setupDC() {
         dc.onopen = function () {
           connected = true;
+          clearTimeout(startTimer);
           setStatus("");
-          // Vermittlung wird nicht mehr gebraucht
+          // Lobby verlassen: Raum verschwindet für alle anderen, Vermittlung wird nicht mehr gebraucht
           try {
+            channel.untrack();
             client.removeChannel(channel);
           } catch (e) {}
           startGame();
@@ -340,50 +640,7 @@
         $("ping").textContent = "Verbindung getrennt";
         msgText = "Gegner getrennt";
       }
-
-      $("btnCreate").onclick = function () {
-        if (SUPABASE_URL.indexOf("DEIN-PROJEKT") > -1) {
-          setStatus(
-            "Bitte zuerst SUPABASE_URL und SUPABASE_KEY im Code eintragen.",
-          );
-          return;
-        }
-        if (!window.supabase) {
-          setStatus("Supabase-Bibliothek konnte nicht geladen werden.");
-          return;
-        }
-        role = "host";
-        var code = rnd(4, "ABCDEFGHJKLMNPQRSTUVWXYZ23456789");
-        $("codeShow").textContent = code;
-        $("mycode").hidden = false;
-        setStatus("Warte auf den Gegner …");
-        openChannel(code, function () {});
-      };
-      $("btnJoin").onclick = function () {
-        if (SUPABASE_URL.indexOf("DEIN-PROJEKT") > -1) {
-          setStatus(
-            "Bitte zuerst SUPABASE_URL und SUPABASE_KEY im Code eintragen.",
-          );
-          return;
-        }
-        if (!window.supabase) {
-          setStatus("Supabase-Bibliothek konnte nicht geladen werden.");
-          return;
-        }
-        var code = $("codeIn").value.trim().toUpperCase();
-        if (code.length !== 4) {
-          setStatus("Bitte den 4-stelligen Code eingeben.");
-          return;
-        }
-        role = "guest";
-        setStatus("Suche Raum " + code + " …");
-        openChannel(code, function () {
-          sig({ type: "hello" });
-          helloTimer = setInterval(function () {
-            sig({ type: "hello" });
-          }, 1500);
-        });
-      };
+      init();
 
       /* ---------- Spiel ---------- */
       var W = 640,
